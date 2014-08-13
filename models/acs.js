@@ -43,7 +43,7 @@ var k = 0;
               if (i == 0){
                 headers = row;
               } else {
-                feature = {type:'Feature', properties:{}};
+                feature = { type: 'Feature', properties: {}, geometry: null };
                 row.forEach(function(col,j){
                   feature.properties[headers[j]] = col;
                 });
