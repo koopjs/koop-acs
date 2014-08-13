@@ -1,54 +1,40 @@
 // Defines the routes and params name that will be passed in req.params 
 module.exports = {
   
-  'get /sample/': {
-    controller: 'sample',
+  'get /acs/': {
+    controller: 'acs',
     action: 'index'
   },
 
-  'get /sample': {
-    controller: 'sample',
+  'get /acs': {
+    controller: 'acs',
     action: 'index'
   },
 
-  'get /sample/:id.:format': {
-    controller: 'sample',
-    action: 'getRepo'
+  'get /acs/:year/:state/:variable/:for': {
+    controller: 'acs',
+    action: 'get'
   },
 
-  'get /sample/:id': {
-    controller: 'sample',
-    action: 'getRepo'
+  'get /acs/:year/:state/:variable/:for/drop': {
+    controller: 'acs',
+    action: 'drop'
   },
 
-  'get /sample/:id/preview': {
-    controller: 'sample',
-    action: 'preview'
-  },
-
-  'get /sample/:id/FeatureServer': {
-    controller: 'sample',
+  'get /acs/:year/:state/:variable/:for/FeatureServer': {
+    controller: 'acs',
     action: 'featureservice'
   },
 
-  'get /sample/:id/FeatureServer/:layer': {
-    controller: 'sample',
+  'get /acs/:year/:state/:variable/:for/FeatureServer/:layer': {
+    controller: 'acs',
     action: 'featureservice'
   },
 
-  'get /sample/:id/FeatureServer/:layer/:method': {
-    controller: 'sample',
+  'get /acs/:year/:state/:variable/:for/FeatureServer/:layer/:method': {
+    controller: 'acs',
     action: 'featureservice'
-  },
-
-  'get /sample/:id/thumbnail' : {
-    controller  : 'sample',
-    action: 'thumbnail'
-  },
-
-  'get /sample/:id/tiles/:z/:x/:y.:format': { 
-    controller : 'sample',
-    action: 'tiles'
   }
+
 
 }

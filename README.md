@@ -1,6 +1,6 @@
-# koop-sample-provider 
+# koop-acs 
 
-## A simple provider for Koop
+## A koop provider for the American community survey
 
   ```
     git clone 
