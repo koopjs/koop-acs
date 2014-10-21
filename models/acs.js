@@ -63,15 +63,16 @@ var ACS = function( koop ){
         // if we get an err then get the data and insert it 
         switch ( qtype ){
           case 'county':
-            url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=county:'+params['county']+'&in=state:'+params['state']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820';
+            url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=county:'+params['county']+'&in=state:'+params['state'];
             break;
           case 'state': 
-            url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=state:'+params['state']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820';
+            url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=state:'+params['state'];
             break;
           case 'tract':
-            url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=tract:'+params['tract']+'&in=state:'+params['state']+'+county:'+params['county']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820'; 
+            url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=tract:'+params['tract']+'&in=state:'+params['state']+'+county:'+params['county']; 
             break;
         }
+        url += '&key=b2410e6888e5e1e6038d4e115bd8a453f692e820';
 
         request.get(url, function(e, res){
           try {
