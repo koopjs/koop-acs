@@ -59,16 +59,15 @@ var Controller = function( acs ){
         }
       };
  
-      var params = req.params;
+      var params = req.params, type;
       if (req.params.state && req.params.county && params.tract){
-        acs.findTract(req.params, req.query, send);
+        type = 'tract';
       } else if (req.params.state && req.params.county){
-        acs.findCounty(req.params, req.query, send);
+        type = 'county';
       } else if ( req.params.state ){
-        acs.findState(req.params, req.query, send);
-      } else {
-        res.send('Malformed query. Must provide at least a state value', 500);
+        type = 'state';
       }
+      acs.find(type, req.params, req.query, send);
   };
   
   
