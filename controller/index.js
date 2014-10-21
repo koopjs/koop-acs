@@ -23,8 +23,8 @@ var Controller = function( acs ){
   };
   
   // Pass the params and query to the model  
-  controller.get = function(req, res){
-      acs.find(req.params, req.query, function(err, data){
+  controller.getTract = function(req, res){
+      acs.findTract(req.params, req.query, function(err, data){
         if (err){
           controller.Error(req, res, 500, err);
         } else {
@@ -34,8 +34,19 @@ var Controller = function( acs ){
   };
 
   // Pass the params and query to the model  
-  controller.getCounties = function(req, res){
-      acs.findCounties(req.params, req.query, function(err, data){
+  controller.getCounty = function(req, res){
+      acs.findCounty(req.params, req.query, function(err, data){
+        if (err){
+          controller.Error(req, res, 500, err);
+        } else {
+          res.json( data );
+        }
+      });
+  };
+
+  // Pass the params and query to the model  
+  controller.getState = function(req, res){
+      acs.findState(req.params, req.query, function(err, data){
         if (err){
           controller.Error(req, res, 500, err);
         } else {

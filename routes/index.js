@@ -2,6 +2,7 @@
 module.exports = {
   'get /acs/': 'index',
   'get /acs': 'index',
-  'get /acs/:year/:state/:variable/:for': 'get',
-  'get /acs/:year/state/:state/county/:county/:variable': 'getCounties'
+  'get /acs/:year/state/:state/:variable': 'getState',
+  'get /acs/:year/state/:state/county/:county/:variable': 'getCounty',
+  'get /acs/:year/state/:state/county/:county/tract/:tract/:variable': 'getTract'
 }

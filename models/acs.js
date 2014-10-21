@@ -25,13 +25,11 @@ var ACS = function( koop ){
 
   // looks at the cache and checks for data
   // requests it from the API if not found in cache 
-  acs.findCounties = function( params, options, callback ){
+  acs.findCounty = function( params, options, callback ){
     var k = 0;
     var q = async.queue(function (task, cb) {
-      //console.log(k++, geojson.features.length);
       acs.client.query(task.query, function(err, result) {
         task.feature.geometry = JSON.parse( result.rows[0].geom );
-        //geojson.features.push(task.feature);
         cb( task.feature );
       });
     }, 4);
@@ -101,14 +99,12 @@ var ACS = function( koop ){
 
   // looks at the cache and checks for data
   // requests it from the API if not found in cache 
-  acs.find = function( params, options, callback ){
+  acs.findTract = function( params, options, callback ){
     var k = 0;
     var q = async.queue(function (task, cb) {
-      console.log(k++, geojson.features.length);
       acs.client.query(task.query, function(err, result) {
         task.feature.geometry = JSON.parse( result.rows[0].geom );
-        geojson.features.push(task.feature);
-        cb( ); 
+        cb( task.feature ); 
       });
     }, 4);
   
@@ -124,22 +120,22 @@ var ACS = function( koop ){
 
     // check for the needed params 
     // we could add some validation to the terms used here (in a new method _validate)
-    if ( !params['year'] || !params['state'] || !params['for'] || !params['variable']){
-      callback('Must specify a year, state, for, and a variable', null );
+    if ( !params['year'] || !params['state'] || !params['county'] || !params['tract'] || !params['variable']){
+      callback('Must specify a year, state, county, tract, and a variable', null );
       return;
     }
   
     // Okay all good, move on ...
   
     var type = 'acs';
-    var key = acs.genKey( params );
+    var key = [params['year'], params['state'], params['county'], params['tract'], params['variable']].join('-');;
     var headers, query, feature, geojson = { type:'FeatureCollection', features:[] };
     
     // check the cache for data with this type & key
     koop.Cache.get( type, key, options, function(err, entry ){
       if ( err){
         // if we get an err then get the data and insert it 
-        var url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for='+params['for']+'&in=county:'+params['county']+'state:'+params['state']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820'; 
+        var url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=tract:'+params['tract']+'&in=state:'+params['state']+'+county:'+params['county']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820'; 
   
         request.get(url, function(e, res){
           try {
@@ -152,19 +148,14 @@ var ACS = function( koop ){
                 row.forEach(function(col,j){
                   feature.properties[headers[j]] = col;
                 });
-                  if ( feature.properties.tract ){
-                    query = "select st_asgeojson(geom) as geom from tracts where tractce = '"+feature.properties.tract+"' AND statefp = '"+feature.properties.state+"' AND countyfp = '"+feature.properties.county+"'";
-                    q.push({query: query, feature: feature}, function(f){
-                      //console.log('wtf'); 
-                      //geojson.features.push( f );
-                    });
-                    //console.log('look up tract ', col);
-                  }
-                  //geojson.features.push( feature );
+                if ( feature.properties.tract ){
+                  query = "select st_asgeojson(geom) as geom from tracts where tractce = '"+feature.properties.tract+"' AND statefp = '"+feature.properties.state+"' AND countyfp = '"+feature.properties.county+"'";
+                  q.push({query: query, feature: feature}, function(f){
+                    geojson.features.push( f );
+                  });
+                }
               }
             });
-            //console.log('wtf');
-            //callback(null, geojson)
             
           } catch(e){
             console.log(e);
@@ -173,11 +164,84 @@ var ACS = function( koop ){
         });
       } else {
         // We have data already, send it back
-        console.log('good');
         callback( null, entry );
       }
     });
   };
+
+    // looks at the cache and checks for data
+  // requests it from the API if not found in cache 
+  acs.findState = function( params, options, callback ){
+    var k = 0;
+    var q = async.queue(function (task, cb) {
+      acs.client.query(task.query, function(err, result) {
+        task.feature.geometry = JSON.parse( result.rows[0].geom );
+        cb( task.feature );
+      });
+    }, 4);
+
+    q.drain = function(){
+      // insert data 
+      console.log('DONE', geojson.features.length);
+      koop.Cache.insert( type, key, geojson, 0, function( err, success){
+        if ( success ) {
+          callback( null, geojson );
+        }
+      });
+      
+    };
+
+    // check for the needed params 
+    // we could add some validation to the terms used here (in a new method _validate)
+    if ( !params['year'] || !params['state'] || !params['variable']){
+      callback('Must specify a year, state, and a variable', null );
+      return;
+    }
+
+    // Okay all good, move on ...
+
+    var type = 'acs';
+    var key = [params['year'], params['state'], params['variable']].join('-');
+    var headers, query, feature, geojson = { type:'FeatureCollection', features:[] };
+
+    // check the cache for data with this type & key
+    koop.Cache.get( type, key, options, function(err, entry ){
+      if ( err){
+        // if we get an err then get the data and insert it 
+        var url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=state:'+params['state']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820';
+
+        request.get(url, function(e, res){
+          try {
+            var json = JSON.parse(res.body);
+            json.forEach(function(row,i){
+              if (i == 0){
+                headers = row;
+              } else {
+                feature = {type:'Feature', properties:{}};
+                row.forEach(function(col,j){
+                  feature.properties[headers[j]] = col;
+                });
+                if ( feature.properties.state ){
+                  query = "select st_asgeojson(geom) as geom from us_states where statefp = '"+feature. properties.state+"'";
+                  q.push({query: query, feature: feature}, function(f){
+                    geojson.features.push( f );
+                  });
+                }
+              }
+            });
+          
+          } catch(e){
+            console.log(e);
+            callback(res.body, null);
+          }
+        });
+      } else {
+        // We have data already, send it back
+        callback( null, entry );
+      }
+    });
+    
+  }; 
   
   // drops from the cache
   acs.drop = function( params, options, callback ){
