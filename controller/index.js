@@ -23,50 +23,52 @@ var Controller = function( acs ){
   };
   
   // Pass the params and query to the model  
-  controller.getTract = function(req, res){
-      acs.findTract(req.params, req.query, function(err, data){
-        if (err){
-          controller.Error(req, res, 500, err);
-        } else {
-          res.json( data );
-        }
-      });
-  };
+  controller.get = function(req, res){
 
-  // Pass the params and query to the model  
-  controller.getCounty = function(req, res){
-      acs.findCounty(req.params, req.query, function(err, data){
-        if (err){
-          controller.Error(req, res, 500, err);
-        } else {
-          res.json( data );
-        }
-      });
-  };
+    var send = function(err, data){
+      if (err) {
+        res.send(err, 500);
+      } else {
+        res.json( data );
+      }
+    };
 
-  // Pass the params and query to the model  
-  controller.getState = function(req, res){
-      acs.findState(req.params, req.query, function(err, data){
-        if (err){
-          controller.Error(req, res, 500, err);
-        } else {
-          res.json( data );
-        }
-      });
+    var params = req.params;
+    if (req.params.state && req.params.county && params.tract){
+      acs.find('tract', req.params, req.query, send);
+    } else if (req.params.state && req.params.county){
+      acs.find('county', req.params, req.query, send);
+    } else if ( req.params.state ){
+      acs.find('state', req.params, req.query, send);
+    } else {
+      res.send('Malformed query. Must provide at least a state value', 500);
+    }
+
   };
   
-  controller.featureserver = function(req, res){
+  controller.featureservice = function(req, res){
       var callback = req.query.callback, self = this;
       delete req.query.callback;
-  
-      acs.find(req.params, req.query, function(err, data){
+
+      var send = function(err, data){
         if (err) {
           res.send(err, 500);
         } else {
           delete req.query.geometry;
           controller.processFeatureServer( req, res, err, data, callback);
         }
-      });
+      };
+ 
+      var params = req.params;
+      if (req.params.state && req.params.county && params.tract){
+        acs.findTract(req.params, req.query, send);
+      } else if (req.params.state && req.params.county){
+        acs.findCounty(req.params, req.query, send);
+      } else if ( req.params.state ){
+        acs.findState(req.params, req.query, send);
+      } else {
+        res.send('Malformed query. Must provide at least a state value', 500);
+      }
   };
   
   

@@ -3,21 +3,12 @@ var request = require('request'),
   pg = require('pg'),
   BaseModel = require('koop-server/lib/BaseModel.js');
 
-var config = require('./config');
 
 var ACS = function( koop ){
 
   var acs = {};
   acs.__proto__ = BaseModel( koop );
 
-  // connect to postgis for geom lookups 
-  acs.client = new pg.Client(config.db);
-  acs.client.connect(function(err) {
-    if(err) {
-      console.error('could not connect to postgres', err);
-    }
-  });
-  
   // generates a key used to lookup data in the cache
   acs.genKey = function(params){
     return [params['year'], params['state'], params['for'], params['variable']].join('::');
@@ -25,10 +16,14 @@ var ACS = function( koop ){
 
   // looks at the cache and checks for data
   // requests it from the API if not found in cache 
-  acs.findCounty = function( params, options, callback ){
+  acs.find = function( qtype, params, options, callback ){
     var k = 0;
     var q = async.queue(function (task, cb) {
-      acs.client.query(task.query, function(err, result) {
+      koop.Cache.db._query(task.query, function(err, result) {
+        if (err || !result){
+          callback(err, null);
+          return;
+        }
         task.feature.geometry = JSON.parse( result.rows[0].geom );
         cb( task.feature );
       });
@@ -45,24 +40,38 @@ var ACS = function( koop ){
       
     };
 
-    // check for the needed params 
-    // we could add some validation to the terms used here (in a new method _validate)
-    if ( !params['year'] || !params['state'] || !params['county'] || !params['variable']){
-      callback('Must specify a year, state, county, and a variable', null );
-      return;
+    var type = 'acs', 
+      key, 
+      headers, 
+      url, 
+      query, 
+      feature, 
+      geojson = { type:'FeatureCollection', features:[] };
+
+    if ( qtype == 'state' ){
+      key = [params.year, params.state, params.variable].join('-');
+    } else if (qtype == 'county'){
+      key = [params.year, params.state, params.county, params.variable].join('-');
+    } else if ( qtype == 'tract'){
+      key = [params.year, params.state, params.county, params.tract, params.variable].join('-');
     }
 
-    // Okay all good, move on ...
-
-    var type = 'acs';
-    var key = [params['year'], params['state'], params['county'], params['variable']].join('-');
-    var headers, query, feature, geojson = { type:'FeatureCollection', features:[] };
 
     // check the cache for data with this type & key
     koop.Cache.get( type, key, options, function(err, entry ){
       if ( err){
         // if we get an err then get the data and insert it 
-        var url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=county:'+params['county']+'&in=state:'+params['state']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820';
+        switch ( qtype ){
+          case 'county':
+            url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=county:'+params['county']+'&in=state:'+params['state']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820';
+            break;
+          case 'state': 
+            url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=state:'+params['state']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820';
+            break;
+          case 'tract':
+            url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=tract:'+params['tract']+'&in=state:'+params['state']+'+county:'+params['county']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820'; 
+            break;
+        }
 
         request.get(url, function(e, res){
           try {
@@ -75,12 +84,20 @@ var ACS = function( koop ){
                 row.forEach(function(col,j){
                   feature.properties[headers[j]] = col;
                 });
-                if ( feature.properties.county ){
-                  query = "select st_asgeojson(geom) as geom from us_counties where countyfp = '"+feature.properties.county+"' AND statefp = '"+feature. properties.state+"'";
-                  q.push({query: query, feature: feature}, function(f){
-                    geojson.features.push( f );
-                  });
+                switch ( qtype ){
+                  case 'county':
+                    query = "select st_asgeojson(geom) as geom from us_counties where countyfp = '"+feature.properties.county+"' AND statefp = '"+feature. properties.state+"'";
+                    break;
+                  case 'state':
+                    query = "select st_asgeojson(geom) as geom from us_states where statefp = '"+feature. properties.state+"'";
+                    break;
+                  case 'tract':
+                    query = "select st_asgeojson(geom) as geom from tracts where tractce = '"+feature.properties.tract+"' AND statefp = '"+feature.properties.state+"' AND countyfp = '"+feature.properties.county+"'";
+                    break;
                 }
+                q.push({query: query, feature: feature}, function(f){
+                  geojson.features.push( f );
+                });
               }
             });
           
@@ -97,152 +114,6 @@ var ACS = function( koop ){
     
   }; 
 
-  // looks at the cache and checks for data
-  // requests it from the API if not found in cache 
-  acs.findTract = function( params, options, callback ){
-    var k = 0;
-    var q = async.queue(function (task, cb) {
-      acs.client.query(task.query, function(err, result) {
-        task.feature.geometry = JSON.parse( result.rows[0].geom );
-        cb( task.feature ); 
-      });
-    }, 4);
-  
-    q.drain = function(){
-      // insert data 
-      console.log('DONE', geojson.features.length);  
-      koop.Cache.insert( type, key, geojson, 0, function( err, success){
-        if ( success ) {
-          callback( null, geojson );
-        }
-      });
-    };
-
-    // check for the needed params 
-    // we could add some validation to the terms used here (in a new method _validate)
-    if ( !params['year'] || !params['state'] || !params['county'] || !params['tract'] || !params['variable']){
-      callback('Must specify a year, state, county, tract, and a variable', null );
-      return;
-    }
-  
-    // Okay all good, move on ...
-  
-    var type = 'acs';
-    var key = [params['year'], params['state'], params['county'], params['tract'], params['variable']].join('-');;
-    var headers, query, feature, geojson = { type:'FeatureCollection', features:[] };
-    
-    // check the cache for data with this type & key
-    koop.Cache.get( type, key, options, function(err, entry ){
-      if ( err){
-        // if we get an err then get the data and insert it 
-        var url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=tract:'+params['tract']+'&in=state:'+params['state']+'+county:'+params['county']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820'; 
-  
-        request.get(url, function(e, res){
-          try {
-            var json = JSON.parse(res.body);
-            json.forEach(function(row,i){
-              if (i == 0){
-                headers = row;
-              } else {
-                feature = {type:'Feature', properties:{}};
-                row.forEach(function(col,j){
-                  feature.properties[headers[j]] = col;
-                });
-                if ( feature.properties.tract ){
-                  query = "select st_asgeojson(geom) as geom from tracts where tractce = '"+feature.properties.tract+"' AND statefp = '"+feature.properties.state+"' AND countyfp = '"+feature.properties.county+"'";
-                  q.push({query: query, feature: feature}, function(f){
-                    geojson.features.push( f );
-                  });
-                }
-              }
-            });
-            
-          } catch(e){
-            console.log(e);
-            callback(res.body, null);
-          }  
-        });
-      } else {
-        // We have data already, send it back
-        callback( null, entry );
-      }
-    });
-  };
-
-    // looks at the cache and checks for data
-  // requests it from the API if not found in cache 
-  acs.findState = function( params, options, callback ){
-    var k = 0;
-    var q = async.queue(function (task, cb) {
-      acs.client.query(task.query, function(err, result) {
-        task.feature.geometry = JSON.parse( result.rows[0].geom );
-        cb( task.feature );
-      });
-    }, 4);
-
-    q.drain = function(){
-      // insert data 
-      console.log('DONE', geojson.features.length);
-      koop.Cache.insert( type, key, geojson, 0, function( err, success){
-        if ( success ) {
-          callback( null, geojson );
-        }
-      });
-      
-    };
-
-    // check for the needed params 
-    // we could add some validation to the terms used here (in a new method _validate)
-    if ( !params['year'] || !params['state'] || !params['variable']){
-      callback('Must specify a year, state, and a variable', null );
-      return;
-    }
-
-    // Okay all good, move on ...
-
-    var type = 'acs';
-    var key = [params['year'], params['state'], params['variable']].join('-');
-    var headers, query, feature, geojson = { type:'FeatureCollection', features:[] };
-
-    // check the cache for data with this type & key
-    koop.Cache.get( type, key, options, function(err, entry ){
-      if ( err){
-        // if we get an err then get the data and insert it 
-        var url = 'http://api.census.gov/data/'+params['year']+'/acs5?get='+params['variable']+'&for=state:'+params['state']+'&key=b2410e6888e5e1e6038d4e115bd8a453f692e820';
-
-        request.get(url, function(e, res){
-          try {
-            var json = JSON.parse(res.body);
-            json.forEach(function(row,i){
-              if (i == 0){
-                headers = row;
-              } else {
-                feature = {type:'Feature', properties:{}};
-                row.forEach(function(col,j){
-                  feature.properties[headers[j]] = col;
-                });
-                if ( feature.properties.state ){
-                  query = "select st_asgeojson(geom) as geom from us_states where statefp = '"+feature. properties.state+"'";
-                  q.push({query: query, feature: feature}, function(f){
-                    geojson.features.push( f );
-                  });
-                }
-              }
-            });
-          
-          } catch(e){
-            console.log(e);
-            callback(res.body, null);
-          }
-        });
-      } else {
-        // We have data already, send it back
-        callback( null, entry );
-      }
-    });
-    
-  }; 
-  
   // drops from the cache
   acs.drop = function( params, options, callback ){
     var key = acs.genKey( params ); 
