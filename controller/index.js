@@ -32,6 +32,17 @@ var Controller = function( acs ){
         }
       });
   };
+
+  // Pass the params and query to the model  
+  controller.getCounties = function(req, res){
+      acs.findCounties(req.params, req.query, function(err, data){
+        if (err){
+          controller.Error(req, res, 500, err);
+        } else {
+          res.json( data );
+        }
+      });
+  };
   
   controller.featureserver = function(req, res){
       var callback = req.query.callback, self = this;
