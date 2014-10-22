@@ -34,7 +34,7 @@ var ACS = function( koop ){
       console.log('DONE', geojson.features.length);
       koop.Cache.insert( type, key, geojson, 0, function( err, success){
         if ( success ) {
-          callback( null, geojson );
+          callback( null, [geojson] );
         }
       });
       
