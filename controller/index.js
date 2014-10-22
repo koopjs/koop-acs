@@ -73,7 +73,17 @@ var Controller = function( acs ){
   
   // drops the cache
   controller.drop = function(req, res){
-    acs.drop( req.params, req.query, function(error, result){
+    var params = req.params, key;
+
+    if (req.params.state && req.params.county && params.tract){
+      key = [params.year, params.state, params.county, params.tract, params.variable].join('-');
+    } else if (req.params.state && req.params.county){
+      key = [params.year, params.state, params.county, params.variable].join('-');
+    } else if ( req.params.state ){
+      key = [params.year, params.state, params.variable].join('-');
+    }
+
+    acs.drop( key, req.query, function(error, result){
       if (error) {
         res.send( error, 500);
       } else {

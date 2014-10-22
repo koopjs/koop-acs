@@ -83,7 +83,7 @@ var ACS = function( koop ){
               } else {
                 feature = {type:'Feature', properties:{}};
                 row.forEach(function(col,j){
-                  feature.properties[headers[j]] = col;
+                  feature.properties[headers[j]] = (headers[j] == params.variable) ? parseInt(col) : col;
                 });
                 switch ( qtype ){
                   case 'county':
@@ -116,10 +116,17 @@ var ACS = function( koop ){
   }; 
 
   // drops from the cache
-  acs.drop = function( params, options, callback ){
-    var key = acs.genKey( params ); 
-    acs.remove('acs', key, options, function(err, res){
-      callback(err, res);
+  acs.drop = function( key, options, callback ){
+     // drops the item from the cache
+    var dir = [ 'acs', key, 0].join(':');
+    koop.Cache.remove('acs', key, options, function(err, res){
+      koop.files.removeDir( 'files/' + dir, function(err, res){
+        koop.files.removeDir( 'tiles/'+ dir, function(err, res){
+          koop.files.removeDir( 'thumbs/'+ dir, function(err, res){
+            callback(err, true);
+          });
+        });
+      });
     });
   };
 

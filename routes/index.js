@@ -13,5 +13,8 @@ module.exports = {
   'get /acs/:year/state/:state/county/:county/tract/:tract/:variable/FeatureServer/:layer/:method': 'featureservice',
   'get /acs/:year/state/:state/county/:county/tract/:tract/:variable/FeatureServer/:layer': 'featureservice',
   'get /acs/:year/state/:state/county/:county/tract/:tract/:variable/FeatureServer': 'featureservice',
-  'get /acs/:year/state/:state/county/:county/tract/:tract/:variable': 'get'
+  'get /acs/:year/state/:state/county/:county/tract/:tract/:variable': 'get',
+  'get /acs/:year/state/:state/county/:county/tract/:tract/:variable/drop': 'drop',
+  'get /acs/:year/state/:state/county/:county/:variable/drop': 'drop',
+  'get /acs/:year/state/:state/:variable/drop': 'drop'
 }
