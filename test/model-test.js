@@ -1,6 +1,6 @@
 var should = require('should'),
   config = require('config'),
-  koopserver = require('koop-server')(config); 
+  koopserver = require('koop')(config); 
 
 global.config = config;
 
