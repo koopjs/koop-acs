@@ -1,9 +1,8 @@
 var crypto = require('crypto'),
-  BaseController = require('koop-server/lib/BaseController.js'),
   fs = require('fs');
 
 // inherit from base controller (global via koop-server)
-var Controller = function( acs ){
+var Controller = function( acs, BaseController ){
 
   var controller = {};
   controller.__proto__ = BaseController();

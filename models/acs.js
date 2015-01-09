@@ -1,13 +1,12 @@
 var request = require('request'),
   async = require('async'),
-  pg = require('pg'),
-  BaseModel = require('koop-server/lib/BaseModel.js');
+  pg = require('pg');
 
 
 var ACS = function( koop ){
 
   var acs = {};
-  acs.__proto__ = BaseModel( koop );
+  acs.__proto__ = koop.BaseModel( koop );
 
   // generates a key used to lookup data in the cache
   acs.genKey = function(params){

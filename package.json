@@ -1,6 +1,6 @@
 {
   "name": "koop-acs",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "ACS provider for koop ",
   "main": "index.js",
   "directories": {
@@ -10,7 +10,6 @@
     "test": "mocha test/"
   },
   "dependencies": {
-    "koop-server": "*",
     "pg": "~2.8.3",
     "config": "~0.4.35",
     "ejs": "~1.0.0",
@@ -19,6 +18,7 @@
   "author": "Chris Helm",
   "license": "BSD-2-Clause",
   "devDependencies": {
-    "supertest": "~0.11.0"
+    "supertest": "~0.11.0",
+    "koop": "*"
   }
 }
