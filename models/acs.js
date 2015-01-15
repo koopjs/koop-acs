@@ -30,7 +30,6 @@ var ACS = function( koop ){
 
     q.drain = function(){
       // insert data 
-      console.log('DONE', geojson.features.length);
       koop.Cache.insert( type, key, geojson, 0, function( err, success){
         if ( success ) {
           callback( null, [geojson] );
@@ -55,7 +54,9 @@ var ACS = function( koop ){
       key = [params.year, params.state, params.county, params.tract, params.variable].join('-');
     }
 
-
+    // for large datasets ingore koop's large data limit 
+    options.bypass_limit = true;
+ 
     // check the cache for data with this type & key
     koop.Cache.get( type, key, options, function(err, entry ){
       if ( err){

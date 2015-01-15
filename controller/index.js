@@ -31,6 +31,7 @@ var Controller = function( acs, BaseController ){
         res.json( data );
       }
     };
+   
 
     var params = req.params;
     if (req.params.state && req.params.county && params.tract){
@@ -57,7 +58,7 @@ var Controller = function( acs, BaseController ){
           controller.processFeatureServer( req, res, err, data, callback);
         }
       };
- 
+    
       var params = req.params, type;
       if (req.params.state && req.params.county && params.tract){
         type = 'tract';
