@@ -19,9 +19,8 @@ var ACS = function( koop ){
     var k = 0;
     var q = async.queue(function (task, cb) {
       koop.Cache.db._query(task.query, function(err, result) {
-        if (err || !result){
-          callback(err, null);
-          return;
+        if (err || !result || !result.rows.length){
+          return callback(err, null);
         }
         task.feature.geometry = JSON.parse( result.rows[0].geom );
         cb( task.feature );
@@ -29,7 +28,7 @@ var ACS = function( koop ){
     }, 4);
 
     q.drain = function(){
-      // insert data 
+      // insert data
       koop.Cache.insert( type, key, geojson, 0, function( err, success){
         if ( success ) {
           callback( null, [geojson] );
@@ -54,6 +53,9 @@ var ACS = function( koop ){
       key = [params.year, params.state, params.county, params.tract, params.variable].join('-');
     }
 
+    // for large datasets ingore koop's large data limit 
+    options.bypass_limit = true;
+ 
     // check the cache for data with this type & key
     koop.Cache.get( type, key, options, function(err, entry ){
       if ( err){
@@ -80,7 +82,7 @@ var ACS = function( koop ){
               } else {
                 feature = {type:'Feature', properties:{}};
                 row.forEach(function(col,j){
-                  feature.properties[headers[j]] = (headers[j] == params.variable) ? parseInt(col) : col;
+                  feature.properties[headers[j]] = (!isNaN(parseInt(col)) && !( headers[j] == 'county' || headers[j] == 'state' || headers[j] == 'tract')) ? parseInt(col) : col;
                 });
                 switch ( qtype ){
                   case 'county':
