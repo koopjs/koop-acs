@@ -13,12 +13,21 @@ var ACS = function( koop ){
     return [params['year'], params['state'], params['for'], params['variable']].join('::');
   };
 
+  var geomDB;
+  // figure out if we have a PostGIS based cache
+  if ( koop.Cache.db && koop.Cache.db.type && koop.Cache.db.type === 'elasticsearch' ){
+    // require koop-pgcache 
+    geomDB = require('koop-pgcache').connect(koop.config.db.pg, koop);
+  } else {
+    geomDB = koop.Cache.db;
+  }
+
   // looks at the cache and checks for data
   // requests it from the API if not found in cache 
   acs.find = function( qtype, params, options, callback ){
     var k = 0;
     var q = async.queue(function (task, cb) {
-      koop.Cache.db._query(task.query, function(err, result) {
+      geomDB._query(task.query, function(err, result) {
         if (err || !result || !result.rows.length){
           return callback(err, null);
         }

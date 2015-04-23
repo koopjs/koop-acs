@@ -1,6 +1,6 @@
 {
   "name": "koop-acs",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "ACS provider for koop ",
   "main": "index.js",
   "directories": {
