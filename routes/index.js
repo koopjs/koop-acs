@@ -2,6 +2,7 @@
 module.exports = {
   'get /acs/': 'index',
   'get /acs': 'index',
+  'get /acs/search': 'search',
   'get /acs/:year/state/:state/:variable/FeatureServer/:layer/:method': 'featureservice',
   'get /acs/:year/state/:state/:variable/FeatureServer/:layer': 'featureservice',
   'get /acs/:year/state/:state/:variable/FeatureServer': 'featureservice',

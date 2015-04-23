@@ -20,6 +20,12 @@ var Controller = function( acs, BaseController ){
   controller.index = function(req, res){
    res.json({'American Community Survey API': 'http://api.census.gov/data/2012/acs5/geo.html'} );
   };
+
+  controller.search = function(req, res){
+    acs.search(req.query, function(err, data){
+      res.json(data);
+    });
+  };
   
   // Pass the params and query to the model  
   controller.get = function(req, res){
