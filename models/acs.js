@@ -1,6 +1,5 @@
 var request = require('request'),
-  async = require('async'),
-  pg = require('pg');
+  async = require('async');
 
 
 var ACS = function( koop ){
