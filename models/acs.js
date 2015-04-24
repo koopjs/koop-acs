@@ -1,11 +1,13 @@
 var request = require('request'),
-  async = require('async');
-
+  async = require('async'),
+  fs = require('fs');
 
 var ACS = function( koop ){
 
   var acs = {};
   acs.__proto__ = koop.BaseModel( koop );
+
+  var variables = JSON.parse(fs.readFileSync(__dirname + '/../lib/variables.json').toString());
 
   // generates a key used to lookup data in the cache
   acs.genKey = function(params){
@@ -31,6 +33,10 @@ var ACS = function( koop ){
           return callback(err, null);
         }
         task.feature.geometry = JSON.parse( result.rows[0].geom );
+        if (variables[p]){
+          task.feature.properties.label = variables[p].label;
+          task.feature.properties.concept = variables[p].concept;
+        }
         cb( task.feature );
       });
     }, 4);
