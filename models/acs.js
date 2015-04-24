@@ -141,7 +141,7 @@ var ACS = function( koop ){
   // searches across all ACS data in the cache
   acs.search = function( options, callback ){
     // drops the item from the cache
-    options.type = 'acs';
+    //options.type = 'acs';
     koop.Cache.db.select('all', options, function(err, res){
       callback(null, res);
     });
