@@ -40,10 +40,9 @@ var ACS = function( koop ){
               concept: variables[p].concept,
               value: task.feature.properties[p] 
             };
-            //task.feature.properties[p+'_'+label] = variables[p].label;
-            //task.feature.properties[p+'_'+concept] = variables[p].concept;
           }
           task.feature.properties.source = type;
+          task.feature.properties.level = qtype;
         }
         cb( task.feature );
       });
