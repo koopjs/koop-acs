@@ -35,9 +35,15 @@ var ACS = function( koop ){
         task.feature.geometry = JSON.parse( result.rows[0].geom );
         for (var p in task.feature.properties){
           if (variables[p]){
-            task.feature.properties[p+'_'+label] = variables[p].label;
-            task.feature.properties[p+'_'+concept] = variables[p].concept;
+            task.feature.properties[p] = {
+              label: variables[p].label,
+              concept: variables[p].concept,
+              value: task.feature.properties[p] 
+            };
+            //task.feature.properties[p+'_'+label] = variables[p].label;
+            //task.feature.properties[p+'_'+concept] = variables[p].concept;
           }
+          task.feature.properties.source = type;
         }
         cb( task.feature );
       });
