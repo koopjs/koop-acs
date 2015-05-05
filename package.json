@@ -3,6 +3,7 @@
   "version": "0.2.12",
   "description": "ACS provider for koop ",
   "main": "index.js",
+  "repository": "koopjs/koop-acs",
   "directories": {
     "test": "test"
   },
