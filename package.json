@@ -11,16 +11,16 @@
     "test": "mocha test/"
   },
   "dependencies": {
-    "async": "~0.9.0",
-    "config": "~0.4.35",
-    "ejs": "~1.0.0",
+    "async": "~2.5.0",
+    "config": "~1.26.2",
+    "ejs": "~2.5.7",
     "koop-pgcache": "latest",
     "request": "^2.51.0"
   },
   "author": "Chris Helm",
   "license": "BSD-2-Clause",
   "devDependencies": {
-    "supertest": "~0.11.0",
+    "supertest": "~3.0.0",
     "koop": "*"
   }
 }
